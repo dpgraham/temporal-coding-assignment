@@ -117,7 +117,7 @@
     }
   }
   
-  // bind to the input tag
+  // call fetchPokemonHandler when user inputs text
   searchbox
     .addEventListener('input', (evt) => {
       fetchPokemonHandler(evt.target.value);
