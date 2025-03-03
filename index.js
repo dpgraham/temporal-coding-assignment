@@ -3,6 +3,7 @@
   const searchbox = document.getElementById('pokemon-finder');
   const pokemonListEl = document.getElementById('pokemons');
   const statusEl = document.getElementById('status');
+  const loadingNextPageEl = document.getElementById('loading-next-page');
   const API_ROOT = 'https://meowing-bristle-alamosaurus.glitch.me';
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -40,6 +41,7 @@
       setStatus('Unrequested');
       return populatePokemon();
     }
+    setIsLoadingNextPage(false);
     setStatus('Loading');
     pokemonListEl.innerHTML = '';
     
@@ -60,26 +62,36 @@
             if (mostRecentSearch !== text) return;
             populatePokemon(pokemon);
             if (nextPage) {
-              fetchNextPage(text, 1);
+              fetchNextPage(text, nextPage);
             }
           })
       });
   }
 
+  function setIsLoadingNextPage (isLoading) {
+    loadingNextPageEl.innerHTML = isLoading ? 'Next page is loading...' : '';
+  }
+
   // get the next page of Pokemon
   // TODO: make this and fetchPokemon less repetitive
-  function fetchNextPage (text, page) {
+  function fetchNextPage (text, page, retries=3) {
+    setIsLoadingNextPage(true);
     let searchUrl = `${API_ROOT}/api/pokemon/search/${text}?page=${page}`;
     if (chaos) searchUrl += '&chaos=true';
     fetch(searchUrl + '')
       .then((res) => {
         if (mostRecentSearch !== text) return;
+        if (res.status === 500 && retries > 0) {
+            fetchNextPage(text, page, retries - 1);
+        }
         res.json()
           .then(({ pokemon, nextPage }) => {
             if (mostRecentSearch !== text) return;
             populatePokemon(pokemon);
             if (nextPage) {
-              fetchNextPage(text);
+              fetchNextPage(text, nextPage);
+            } else {
+              setIsLoadingNextPage(false);
             }
           })
           .catch((res) => console.log(res))
