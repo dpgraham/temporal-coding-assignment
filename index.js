@@ -68,10 +68,6 @@
       });
   }
 
-  function setIsLoadingNextPage (isLoading) {
-    loadingNextPageEl.innerHTML = isLoading ? 'Next page is loading...' : '';
-  }
-
   // get the next page of Pokemon
   // TODO: make this and fetchPokemon less repetitive
   function fetchNextPage (text, page, retries=3) {
@@ -98,6 +94,11 @@
       });
   }
 
+  // set an indicator showing if the next page of results is loading
+  function setIsLoadingNextPage (isLoading) {
+    loadingNextPageEl.innerHTML = isLoading ? 'Next page is loading...' : '';
+  }
+
   // debounce the searches so that there isn't a search on every single keystroke
   const fetchPokemonHandler = debounce(fetchPokemon);
 
@@ -110,7 +111,7 @@
     setStatus('Fetched results');
     for (const pokemon of pokemons) {
       const li = document.createElement('li');
-      li.innerHTML = pokemon.name;
+      li.innerHTML = `<a href='pokemon.html?id=${pokemon.id}'>${pokemon.name}</a>`;
       pokemonListEl.appendChild(li);
     }
   }
