@@ -39,6 +39,7 @@
     mostRecentSearch = text;
     if (text === '') {
       setStatus('Unrequested');
+      setIsLoadingNextPage(false);
       return populatePokemon();
     }
     setIsLoadingNextPage(false);

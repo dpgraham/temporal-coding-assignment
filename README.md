@@ -1,5 +1,8 @@
 # TEMPORAL POKEMON TAKE HOME ASSIGNMENT
-* Open this page at index.html
+
+## INSTRUCTIONS
+* Clone this repository
+* Open your browser to index.html
 * Set "chaos=true" in query params to use chaos API calls
 * Set "flakey=true" in query params to make the API calls retry twice
 
