@@ -31,11 +31,6 @@
 
   // fetches a list of pokemon that match text and then renders them in HTML
   function fetchPokemon (text, retries=3) {
-    let searchUrl = `${API_ROOT}/api/pokemon/search/${text}?`;
-    if (chaos) searchUrl += 'chaos=true&';
-    if (flakey && retries > 1) {
-        searchUrl += 'flakiness=1&';
-    }
     mostRecentSearch = text;
     if (text === '') {
       setStatus('Unrequested');
@@ -46,53 +41,55 @@
     setStatus('Loading');
     pokemonListEl.innerHTML = '';
     
+    
+    let searchUrl = `/api/pokemon/search/${text}?`;
     hasRunningFetch = true;
-    fetch(searchUrl)
-      .then((res) => {
+    NS.get(searchUrl, {
+      queryParams: {
+        chaos: !!chaos + '',
+      },
+      onSuccess: ({ pokemon, nextPage }) => {
         if (mostRecentSearch !== text) return;
-        if (res.status === 404) {
-            setStatus('Empty Results');
-        } else if (res.status >= 500 && retries > 0) {
-            fetchPokemon(text, retries - 1);
-            return;
-        } else if (res.status > 400) {
-            setStatus('Error');
+        populatePokemon(pokemon);
+        if (nextPage) {
+          fetchNextPage(text, nextPage);
         }
-        res.json()
-          .then(({ pokemon, nextPage }) => {
-            if (mostRecentSearch !== text) return;
-            populatePokemon(pokemon);
-            if (nextPage) {
-              fetchNextPage(text, nextPage);
-            }
-          })
-      });
+      },
+      onError: (code) => {
+        if (code === 404) {
+          setStatus('Empty Results');
+        }
+      },
+      retries,
+    });
   }
 
   // get the next page of Pokemon
   // TODO: make this and fetchPokemon less repetitive
   function fetchNextPage (text, page, retries=3) {
     setIsLoadingNextPage(true);
-    let searchUrl = `${API_ROOT}/api/pokemon/search/${text}?page=${page}`;
-    if (chaos) searchUrl += '&chaos=true';
-    fetch(searchUrl + '')
-      .then((res) => {
+    let searchUrl = `/api/pokemon/search/${text}`;
+    NS.get(searchUrl, {
+      onSuccess({ pokemon, nextPage }) {
         if (mostRecentSearch !== text) return;
-        if (res.status === 500 && retries > 0) {
-            fetchNextPage(text, page, retries - 1);
+        populatePokemon(pokemon);
+        if (nextPage) {
+          fetchNextPage(text, nextPage);
+        } else {
+          setIsLoadingNextPage(false);
         }
-        res.json()
-          .then(({ pokemon, nextPage }) => {
-            if (mostRecentSearch !== text) return;
-            populatePokemon(pokemon);
-            if (nextPage) {
-              fetchNextPage(text, nextPage);
-            } else {
-              setIsLoadingNextPage(false);
-            }
-          })
-          .catch((res) => console.log(res))
-      });
+      },
+      onError(status) {
+        if (mostRecentSearch !== text) return;
+        if (status === 500 && retries > 0) {
+          fetchNextPage(text, page, retries - 1);
+        }
+      },
+      retries,
+      queryParams: {
+        chaos: !!chaos + '',
+      },
+    });
   }
 
   // set an indicator showing if the next page of results is loading

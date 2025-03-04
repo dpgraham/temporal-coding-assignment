@@ -28,20 +28,26 @@
     let url = `${API_ROOT}/api/pokemon/${id}?`;
     if (chaos) url += 'chaos=true&';
     if (flakey && retries > 2) url += 'flakiness=1&'
-    fetch(url)
-        .then((res) => {
-        if (res.status >= 400) {
-            if (retries > 0) {
-                fetchPokemon(retries - 1);
-            } else {
-                loadingEl.innerHTML = 'An error occurred. Failed to fetch Pokemon';
-            }
-            return;
-        }
-        res.json().then(function (stats) {
-            populateStats(stats);
-        });
-    });
+
+  NS.get(`/api/pokemon/${id}`, {
+    onSuccess(stats) {
+      populateStats(stats);
+    },
+    onError(status) {
+      if (status === 404) {
+        loadingEl.innerHTML = 'Could not find this Pokemon';
+      }
+      if (retries > 0) {
+        fetchPokemon(retries - 1);
+      } else {
+          loadingEl.innerHTML = 'An error occurred. Failed to fetch Pokemon';
+      }
+      return;
+    },
+    queryParams: {
+      chaos: !!chaos && 'true',
+    },
+  });
   }
   
   fetchPokemon();
